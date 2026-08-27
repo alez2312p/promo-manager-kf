@@ -43,12 +43,12 @@ async function main() {
 
   console.log('✅ [SEED] 4 Categories created.');
 
-  // 3. Insert 6 Products with realistic prices and SKUs
+  // 3. Insert 6 Products with realistic COP prices and SKUs
   const p1 = await prisma.product.create({
     data: {
       name: 'Coca Cola Original 1.5L',
       sku: 'BEB-COCA-1500',
-      price: 2.80,
+      price: 6800,
       categoryId: categoryBebidas.id,
     },
   });
@@ -57,7 +57,7 @@ async function main() {
     data: {
       name: 'Agua Mineral Sin Gas 600ml',
       sku: 'BEB-AGUA-0600',
-      price: 1.20,
+      price: 2500,
       categoryId: categoryBebidas.id,
     },
   });
@@ -66,7 +66,7 @@ async function main() {
     data: {
       name: 'Papas Lays Clásicas 160g',
       sku: 'SNK-LAYS-0160',
-      price: 2.10,
+      price: 5200,
       categoryId: categorySnacks.id,
     },
   });
@@ -75,7 +75,7 @@ async function main() {
     data: {
       name: 'Galletas Oreo Original 108g',
       sku: 'SNK-OREO-0108',
-      price: 1.35,
+      price: 3400,
       categoryId: categorySnacks.id,
     },
   });
@@ -84,7 +84,7 @@ async function main() {
     data: {
       name: 'Leche Entera Tetra Pak 1L',
       sku: 'LAC-LECH-1000',
-      price: 1.65,
+      price: 4500,
       categoryId: categoryLacteos.id,
     },
   });
@@ -93,14 +93,14 @@ async function main() {
     data: {
       name: 'Arroz Superior Extra 1kg',
       sku: 'ABA-ARRO-1000',
-      price: 1.85,
+      price: 4900,
       categoryId: categoryAbarrotes.id,
     },
   });
 
   console.log('✅ [SEED] 6 Products created.');
 
-  // 4. Create Sample Promotions demonstrating optional Category and Product association
+  // 4. Create Sample Promotions with COP values
   const now = new Date();
   const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -112,8 +112,8 @@ async function main() {
       description: '20% de descuento en toda la categoría de bebidas',
       type: 'PERCENTAGE',
       value: 20,
-      minSpend: 5.0,
-      maxDiscount: 10.0,
+      minSpend: 20000,
+      maxDiscount: 15000,
       startDate: now,
       endDate: nextMonth,
       status: 'ACTIVE',
@@ -121,14 +121,14 @@ async function main() {
     },
   });
 
-  // Promotion 2: Associated to specific product 'Papas Lays' ($0.50 off)
+  // Promotion 2: Associated to specific product 'Papas Lays' ($1.500 COP off)
   await prisma.promotion.create({
     data: {
       code: 'SNACK-LAYS-OFF',
       name: 'Descuento Directo en Papas Lays',
-      description: '$0.50 de ahorro en Papas Lays 160g',
+      description: '$ 1.500 de ahorro en Papas Lays 160g',
       type: 'FIXED_AMOUNT',
-      value: 0.50,
+      value: 1500,
       startDate: now,
       endDate: nextMonth,
       status: 'ACTIVE',
@@ -141,10 +141,10 @@ async function main() {
     data: {
       code: 'CYBER-PROMO-15',
       name: 'Cyber Promo Global 15%',
-      description: '15% de descuento en toda la tienda',
+      description: '15% de descuento en toda la tienda para compras mayores a $ 50.000',
       type: 'PERCENTAGE',
       value: 15,
-      minSpend: 20.0,
+      minSpend: 50000,
       startDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
       endDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
       status: 'SCHEDULED',

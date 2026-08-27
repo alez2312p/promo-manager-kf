@@ -38,11 +38,11 @@ model Product {
   name        String
   sku         String      @unique
   price       Float
-  categoryId  String
+  categoryId  String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   promotions  Promotion[]
 
   @@index([categoryId])

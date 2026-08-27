@@ -6,6 +6,7 @@ import { CategoryController } from './category.controller';
 import { validateRequest } from '../../../infrastructure/http/middlewares/validate-request.middleware';
 import {
   createCategorySchema,
+  updateCategorySchema,
   categoryIdParamSchema,
 } from './category.schema';
 
@@ -34,6 +35,23 @@ export const createCategoryRouter = (
     '/',
     validateRequest({ body: createCategorySchema }),
     controller.create
+  );
+
+  // PUT /api/categories/:id
+  router.put(
+    '/:id',
+    validateRequest({
+      params: categoryIdParamSchema,
+      body: updateCategorySchema,
+    }),
+    controller.update
+  );
+
+  // DELETE /api/categories/:id
+  router.delete(
+    '/:id',
+    validateRequest({ params: categoryIdParamSchema }),
+    controller.delete
   );
 
   return router;

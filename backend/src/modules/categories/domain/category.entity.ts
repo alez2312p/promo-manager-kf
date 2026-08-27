@@ -2,6 +2,7 @@ export interface CategoryProps {
   id: string;
   name: string;
   description?: string | null;
+  productsCount?: number;
   createdAt: Date;
 }
 
@@ -20,11 +21,18 @@ export class Category {
     return this.props.description;
   }
 
+  get productsCount(): number {
+    return this.props.productsCount ?? 0;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
 
   toJSON(): CategoryProps {
-    return { ...this.props };
+    return {
+      ...this.props,
+      productsCount: this.productsCount,
+    };
   }
 }

@@ -7,6 +7,7 @@ import { ProductController } from './product.controller';
 import { validateRequest } from '../../../infrastructure/http/middlewares/validate-request.middleware';
 import {
   createProductSchema,
+  updateProductSchema,
   productIdParamSchema,
 } from './product.schema';
 
@@ -38,6 +39,16 @@ export const createProductRouter = (
     '/',
     validateRequest({ body: createProductSchema }),
     controller.create
+  );
+
+  // PUT /api/products/:id
+  router.put(
+    '/:id',
+    validateRequest({
+      params: productIdParamSchema,
+      body: updateProductSchema,
+    }),
+    controller.update
   );
 
   // DELETE /api/products/:id

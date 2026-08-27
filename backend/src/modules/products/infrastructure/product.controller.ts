@@ -39,6 +39,21 @@ export class ProductController {
     }
   };
 
+  update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const product = await this.productService.updateProduct(
+        req.params.id,
+        req.body
+      );
+      res.status(200).json({
+        message: 'Product updated successfully',
+        data: product.toJSON(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       await this.productService.deleteProduct(req.params.id);

@@ -55,6 +55,18 @@ export const promotionApi = {
     return handleResponse<{ message: string; data: Promotion }>(res);
   },
 
+  update: async (
+    id: string,
+    payload: Partial<CreatePromotionInput>
+  ): Promise<{ message: string; data: Promotion }> => {
+    const res = await fetch(`${API_BASE_URL}/promotions/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<{ message: string; data: Promotion }>(res);
+  },
+
   updateStatus: async (
     id: string,
     status: PromotionStatus

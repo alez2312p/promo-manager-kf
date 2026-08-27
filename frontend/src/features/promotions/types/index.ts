@@ -15,10 +15,10 @@ export interface Promotion {
   usageLimit?: number | null;
   usageCount: number;
   status: PromotionStatus;
+  categoryId?: string | null;
+  productId?: string | null;
   createdAt: string;
   updatedAt: string;
-  categoryIds?: string[];
-  productIds?: string[];
 }
 
 export interface PromotionMetrics {
@@ -41,6 +41,8 @@ export interface CreatePromotionInput {
   startDate: string;
   endDate: string;
   usageLimit?: number | null;
+  categoryId?: string | null;
+  productId?: string | null;
 }
 
 export interface PromotionFilters {

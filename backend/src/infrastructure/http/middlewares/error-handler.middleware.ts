@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { DomainError } from '../../../domain/errors/domain.error';
-import { env } from '../../config/env';
+import { env } from '../../../config/env';
 
 export const errorHandler = (
   err: Error,

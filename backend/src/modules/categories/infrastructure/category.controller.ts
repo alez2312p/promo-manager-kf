@@ -38,4 +38,37 @@ export class CategoryController {
       next(error);
     }
   };
+
+  update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const category = await this.categoryService.updateCategory(
+        req.params.id,
+        req.body
+      );
+      res.status(200).json({
+        message: 'Category updated successfully',
+        data: category.toJSON(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const reassignToCategoryId =
+        (req.query.reassignToCategoryId as string) ||
+        req.body?.reassignToCategoryId ||
+        null;
+      await this.categoryService.deleteCategory(
+        req.params.id,
+        reassignToCategoryId
+      );
+      res.status(200).json({
+        message: 'Category deleted successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
