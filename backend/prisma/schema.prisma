@@ -22,35 +22,28 @@ enum PromotionStatus {
 }
 
 model Category {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  slug        String   @unique
+  id          String      @id @default(uuid())
+  name        String      @unique
   description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  products            Product[]
-  promotionCategories PromotionCategory[]
+  createdAt   DateTime    @default(now())
+  
+  products    Product[]
+  promotions  Promotion[]
 
   @@map("categories")
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  sku         String   @unique
+  id          String      @id @default(uuid())
   name        String
-  description String?
+  sku         String      @unique
   price       Float
-  stock       Int      @default(0)
-  imageUrl    String?
-  isActive    Boolean  @default(true)
   categoryId  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  category          Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  promotionProducts PromotionProduct[]
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  promotions  Promotion[]
 
   @@index([categoryId])
   @@index([sku])
@@ -71,35 +64,20 @@ model Promotion {
   usageLimit  Int?
   usageCount  Int             @default(0)
   status      PromotionStatus @default(SCHEDULED)
+
+  // Optional associations to Category OR Product
+  categoryId  String?
+  category    Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  productId   String?
+  product     Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  categories PromotionCategory[]
-  products   PromotionProduct[]
-
   @@index([code])
   @@index([status])
+  @@index([categoryId])
+  @@index([productId])
   @@map("promotions")
-}
-
-model PromotionCategory {
-  promotionId String
-  categoryId  String
-
-  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@id([promotionId, categoryId])
-  @@map("promotion_categories")
-}
-
-model PromotionProduct {
-  promotionId String
-  productId   String
-
-  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@id([promotionId, productId])
-  @@map("promotion_products")
 }

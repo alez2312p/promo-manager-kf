@@ -3,6 +3,8 @@ import cors from 'cors';
 import { env } from './config/env';
 import { healthRouter } from './routes/health.router';
 import { promotionRouter } from './infrastructure/http/routes/promotion.router';
+import { categoryRouter } from './modules/categories/infrastructure/category.router';
+import { productRouter } from './modules/products/infrastructure/product.router';
 import { errorHandler } from './infrastructure/http/middlewares/error-handler.middleware';
 
 export const createApp = (): Express => {
@@ -25,8 +27,17 @@ export const createApp = (): Express => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Routes
+  // Base Health Check
   app.use('/health', healthRouter);
+
+  // Modular API Routes
+  app.use('/api/categories', categoryRouter);
+  app.use('/categories', categoryRouter);
+
+  app.use('/api/products', productRouter);
+  app.use('/products', productRouter);
+
+  app.use('/api/promotions', promotionRouter);
   app.use('/promotions', promotionRouter);
 
   // 404 Handler for unmatched routes

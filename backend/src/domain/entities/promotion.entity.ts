@@ -15,10 +15,10 @@ export interface PromotionProps {
   usageLimit?: number | null;
   usageCount: number;
   status: PromotionStatus;
+  categoryId?: string | null;
+  productId?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  categoryIds?: string[];
-  productIds?: string[];
 }
 
 export class Promotion {
@@ -76,20 +76,20 @@ export class Promotion {
     return this.props.status;
   }
 
+  get categoryId(): string | null | undefined {
+    return this.props.categoryId;
+  }
+
+  get productId(): string | null | undefined {
+    return this.props.productId;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
 
   get updatedAt(): Date {
     return this.props.updatedAt;
-  }
-
-  get categoryIds(): string[] | undefined {
-    return this.props.categoryIds;
-  }
-
-  get productIds(): string[] | undefined {
-    return this.props.productIds;
   }
 
   /**

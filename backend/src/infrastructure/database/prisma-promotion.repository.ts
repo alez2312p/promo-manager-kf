@@ -26,10 +26,10 @@ export class PrismaPromotionRepository implements IPromotionRepository {
       usageLimit: raw.usageLimit,
       usageCount: raw.usageCount,
       status: raw.status as PromotionStatus,
+      categoryId: raw.categoryId,
+      productId: raw.productId,
       createdAt: new Date(raw.createdAt),
       updatedAt: new Date(raw.updatedAt),
-      categoryIds: raw.categories ? raw.categories.map((c: any) => c.categoryId) : [],
-      productIds: raw.products ? raw.products.map((p: any) => p.productId) : [],
     });
   }
 
@@ -49,26 +49,14 @@ export class PrismaPromotionRepository implements IPromotionRepository {
         usageLimit: promotion.usageLimit,
         usageCount: promotion.usageCount,
         status: promotion.status,
+        categoryId: promotion.categoryId || null,
+        productId: promotion.productId || null,
         createdAt: promotion.createdAt,
         updatedAt: promotion.updatedAt,
-        categories: promotion.categoryIds?.length
-          ? {
-              create: promotion.categoryIds.map((categoryId) => ({
-                categoryId,
-              })),
-            }
-          : undefined,
-        products: promotion.productIds?.length
-          ? {
-              create: promotion.productIds.map((productId) => ({
-                productId,
-              })),
-            }
-          : undefined,
       },
       include: {
-        categories: true,
-        products: true,
+        category: true,
+        product: true,
       },
     });
 
@@ -79,8 +67,8 @@ export class PrismaPromotionRepository implements IPromotionRepository {
     const raw = await this.prisma.promotion.findUnique({
       where: { id },
       include: {
-        categories: true,
-        products: true,
+        category: true,
+        product: true,
       },
     });
 
@@ -92,8 +80,8 @@ export class PrismaPromotionRepository implements IPromotionRepository {
     const raw = await this.prisma.promotion.findUnique({
       where: { code },
       include: {
-        categories: true,
-        products: true,
+        category: true,
+        product: true,
       },
     });
 
@@ -118,8 +106,8 @@ export class PrismaPromotionRepository implements IPromotionRepository {
     const list = await this.prisma.promotion.findMany({
       where,
       include: {
-        categories: true,
-        products: true,
+        category: true,
+        product: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -128,7 +116,6 @@ export class PrismaPromotionRepository implements IPromotionRepository {
   }
 
   async update(promotion: Promotion): Promise<Promotion> {
-    // Delete existing relations and recreate if provided
     const raw = await this.prisma.promotion.update({
       where: { id: promotion.id },
       data: {
@@ -143,27 +130,13 @@ export class PrismaPromotionRepository implements IPromotionRepository {
         usageLimit: promotion.usageLimit,
         usageCount: promotion.usageCount,
         status: promotion.status,
+        categoryId: promotion.categoryId || null,
+        productId: promotion.productId || null,
         updatedAt: promotion.updatedAt,
-        categories: promotion.categoryIds
-          ? {
-              deleteMany: {},
-              create: promotion.categoryIds.map((categoryId) => ({
-                categoryId,
-              })),
-            }
-          : undefined,
-        products: promotion.productIds
-          ? {
-              deleteMany: {},
-              create: promotion.productIds.map((productId) => ({
-                productId,
-              })),
-            }
-          : undefined,
       },
       include: {
-        categories: true,
-        products: true,
+        category: true,
+        product: true,
       },
     });
 
@@ -190,8 +163,8 @@ export class PrismaPromotionRepository implements IPromotionRepository {
         endDate: { gte: nowUTC },
       },
       include: {
-        categories: true,
-        products: true,
+        category: true,
+        product: true,
       },
     });
 

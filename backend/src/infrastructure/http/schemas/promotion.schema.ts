@@ -22,8 +22,8 @@ export const createPromotionSchema = z.object({
   startDate: z.string().datetime({ message: 'Start date must be an ISO 8601 string' }).transform((val) => new Date(val)),
   endDate: z.string().datetime({ message: 'End date must be an ISO 8601 string' }).transform((val) => new Date(val)),
   usageLimit: z.number().int().positive('Usage limit must be a positive integer').optional().nullable(),
-  categoryIds: z.array(z.string().uuid('Invalid category ID format')).optional(),
-  productIds: z.array(z.string().uuid('Invalid product ID format')).optional(),
+  categoryId: z.string().uuid('Invalid category ID format').optional().nullable(),
+  productId: z.string().uuid('Invalid product ID format').optional().nullable(),
 });
 
 export const updatePromotionSchema = z.object({
@@ -36,8 +36,8 @@ export const updatePromotionSchema = z.object({
   startDate: z.string().datetime().transform((val) => new Date(val)).optional(),
   endDate: z.string().datetime().transform((val) => new Date(val)).optional(),
   usageLimit: z.number().int().positive().optional().nullable(),
-  categoryIds: z.array(z.string().uuid()).optional(),
-  productIds: z.array(z.string().uuid()).optional(),
+  categoryId: z.string().uuid().optional().nullable(),
+  productId: z.string().uuid().optional().nullable(),
 });
 
 export const updatePromotionStatusSchema = z.object({
