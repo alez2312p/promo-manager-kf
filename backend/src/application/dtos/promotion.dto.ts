@@ -11,8 +11,8 @@ export interface CreatePromotionDTO {
   startDate: Date;
   endDate: Date;
   usageLimit?: number | null;
-  categoryIds?: string[];
-  productIds?: string[];
+  categoryId?: string | null;
+  productId?: string | null;
 }
 
 export interface UpdatePromotionDTO {
@@ -25,8 +25,8 @@ export interface UpdatePromotionDTO {
   startDate?: Date;
   endDate?: Date;
   usageLimit?: number | null;
-  categoryIds?: string[];
-  productIds?: string[];
+  categoryId?: string | null;
+  productId?: string | null;
 }
 
 export interface UpdatePromotionStatusDTO {

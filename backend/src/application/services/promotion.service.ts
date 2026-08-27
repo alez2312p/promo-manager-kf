@@ -74,10 +74,10 @@ export class PromotionService {
       usageLimit: dto.usageLimit ?? null,
       usageCount: 0,
       status: 'SCHEDULED',
+      categoryId: dto.categoryId ?? null,
+      productId: dto.productId ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      categoryIds: dto.categoryIds ?? [],
-      productIds: dto.productIds ?? [],
     });
 
     return await this.promotionRepository.create(promotion);
@@ -165,8 +165,10 @@ export class PromotionService {
       endDate,
       usageLimit:
         dto.usageLimit !== undefined ? dto.usageLimit : promotion.usageLimit,
-      categoryIds: dto.categoryIds ?? promotion.categoryIds,
-      productIds: dto.productIds ?? promotion.productIds,
+      categoryId:
+        dto.categoryId !== undefined ? dto.categoryId : promotion.categoryId,
+      productId:
+        dto.productId !== undefined ? dto.productId : promotion.productId,
       updatedAt: new Date(),
     };
 
