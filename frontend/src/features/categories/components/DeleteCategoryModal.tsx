@@ -80,6 +80,7 @@ export const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({
         {productCount > 0 && (
           <div className="space-y-3 p-3.5 rounded-xl border bg-muted/30">
             <div className="flex items-start gap-2.5 text-xs text-amber-500">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <p className="text-foreground leading-snug">
                 ¿A qué categoría deseas mover los{' '}
                 <span className="font-bold text-primary">{productCount} productos</span>?

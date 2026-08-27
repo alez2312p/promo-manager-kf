@@ -29,6 +29,7 @@ export const createApp = (): Express => {
 
   // Base Health Check
   app.use('/health', healthRouter);
+  app.use('/api/health', healthRouter);
 
   // Modular API Routes
   app.use('/api/categories', categoryRouter);

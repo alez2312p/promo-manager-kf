@@ -1,126 +1,192 @@
-# Promo Manager KF - Monorepo
+# PromoManager KF - Módulo de Gestión de Promociones
 
-Estructura inicial de monorepo para la prueba técnica de gestión de promociones.
+Sistema web full-stack para el registro, control de vigencia, estados y administración de promociones, productos y categorías en puntos de venta (POS). Diseñado e implementado siguiendo los principios de **Clean Architecture**, **Domain-Driven Design (DDD)**, **React + Vite**, **Node.js + Express + TypeScript**, **PostgreSQL + Prisma** y orquestación con **Docker Compose**.
 
 ---
 
-## 🏗️ Arquitectura del Proyecto
+## Tabla de Contenidos
 
-El monorepo está organizado en dos proyectos principales y orquestado mediante Docker Compose:
+- [PromoManager KF - Módulo de Gestión de Promociones](#promomanager-kf---módulo-de-gestión-de-promociones)
+  - [Tabla de Contenidos](#tabla-de-contenidos)
+  - [Características Principales](#características-principales)
+  - [Arquitectura del Proyecto](#arquitectura-del-proyecto)
+  - [Requisitos Previos](#requisitos-previos)
+  - [Inicio Rápido con Docker Compose](#inicio-rápido-con-docker-compose)
+  - [Desarrollo Local (Sin Docker)](#desarrollo-local-sin-docker)
+    - [1. Iniciar el servicio de base de datos](#1-iniciar-el-servicio-de-base-de-datos)
+    - [2. Instalar dependencias del monorepo](#2-instalar-dependencias-del-monorepo)
+    - [3. Configurar variables de entorno](#3-configurar-variables-de-entorno)
+    - [4. Sincronizar esquema y poblar datos iniciales](#4-sincronizar-esquema-y-poblar-datos-iniciales)
+    - [5. Iniciar servidores de desarrollo](#5-iniciar-servidores-de-desarrollo)
+  - [Datos de Prueba (Seed Database)](#datos-de-prueba-seed-database)
+  - [Endpoint de Salud (GET /health)](#endpoint-de-salud-get-health)
+  - [Pruebas Unitarias](#pruebas-unitarias)
+  - [Pipeline de CI/CD (GitHub Actions)](#pipeline-de-cicd-github-actions)
+  - [Justificación de Decisiones Técnicas](#justificación-de-decisiones-técnicas)
+
+---
+
+## Características Principales
+
+- **Gestión Integral de Promociones**:
+  - Creación con validaciones estrictas: nombre, código único, tipo de descuento (`Porcentaje` o `Monto Fijo`), valor, fecha de inicio y fin.
+  - Alcance configurable: aplicación global (toda la tienda), por categoría o por producto específico.
+  - Flujo de ciclo de vida de estados: `Programada` -> `Activa` -> `Finalizada`.
+  - Eliminación segura mediante diálogo de confirmación (restringida exclusivamente al estado `Programada`).
+  - Inmutabilidad estricta para promociones en estado `Finalizada`.
+- **Dashboard y Vista de Resumen**:
+  - Métricas en tiempo real con conteo por estado (`Programadas`, `Activas`, `Finalizadas`).
+  - Conteo y tabla dedicada de promociones vigentes hoy (evaluadas en tiempo real en zona horaria UTC).
+- **Catálogo de Productos y Categorías**:
+  - Tabla responsiva con vista híbrida (tarjetas compactas en móvil y tabla de datos con desplazamiento horizontal en escritorio).
+  - Precios formateados en Pesos Colombianos (COP).
+  - Generador automático de códigos SKU con ayuda contextual.
+  - Reasignación asistida al eliminar categorías con productos asociados (transferencia a otra categoría o desvinculación a "Sin Categoría").
+- **Interfaz y Experiencia de Usuario**:
+  - Diseño Mobile-First desarrollado con **Tailwind CSS** y componentes accesibles de **shadcn/ui**.
+
+---
+
+## Arquitectura del Proyecto
+
+El repositorio está estructurado como un monorepo con separación modular de responsabilidades:
 
 ```
 promo-manager-kf/
-├── backend/                  # API REST en Node.js + Express + TypeScript
+├── backend/                       # API REST (Clean Architecture + DDD)
 │   ├── prisma/
-│   │   └── schema.prisma    # Esquema de base de datos PostgreSQL
+│   │   ├── schema.prisma         # Esquema relacional PostgreSQL
+│   │   └── seed.ts               # Datos iniciales de prueba en COP
 │   ├── src/
-│   │   ├── config/
-│   │   │   └── env.ts        # Validador de variables de entorno (dotenv + Zod)
-│   │   ├── lib/
-│   │   │   └── prisma.ts     # Instancia Singleton de Prisma Client
-│   │   ├── routes/
-│   │   │   └── health.router.ts # Endpoint GET /health (SELECT 1)
-│   │   ├── app.ts            # Configuración de Express & Middlewares
-│   │   └── index.ts          # Punto de entrada y Graceful Shutdown
-│   ├── Dockerfile            # Construcción multietapa de producción
+│   │   ├── domain/               # Entidades, Excepciones e Interfaces de Repositorio
+│   │   ├── application/          # Servicios de Dominio y DTOs
+│   │   ├── infrastructure/       # Repositorios Prisma, Controladores y Routers Express
+│   │   ├── config/               # Validador de variables de entorno con Zod
+│   │   └── index.ts              # Punto de entrada y Graceful Shutdown
+│   ├── Dockerfile                # Construcción multietapa (Node 20 Alpine)
 │   └── package.json
-├── frontend/                 # Aplicación SPA en React + Vite + TypeScript
-│   ├── src/                  # Componentes y estilos React
-│   ├── nginx.conf            # Servidor web Nginx para producción
-│   ├── Dockerfile            # Construcción multietapa (Node -> Nginx)
+├── frontend/                      # SPA (React 18 + Vite + TypeScript)
+│   ├── src/
+│   │   ├── components/layout/    # Navbar responsivo con Sheet móvil y MainLayout
+│   │   ├── components/ui/        # Componentes base shadcn/ui & DeleteConfirmModal
+│   │   ├── features/             # Módulos: promotions, products, categories, dashboard
+│   │   ├── pages/                # Vistas principales de React Router
+│   │   └── lib/utils.ts          # Utilidades y formateador de moneda COP
+│   ├── nginx.conf                 # Configuración de Nginx para producción con Gzip
+│   ├── Dockerfile                 # Construcción multietapa (Node 20 -> Nginx Alpine)
 │   └── package.json
-├── docker-compose.yml        # Orquestador (PostgreSQL 16, Backend, Frontend)
-├── .env.example              # Variables de entorno documentadas
-├── .gitignore                # Reglas de exclusión de Git
-└── package.json              # Scripts globales del monorepo
+├── .github/workflows/
+│   └── ci.yml                    # Pipeline CI/CD: lint -> test -> build-docker -> smoke-test
+├── docker-compose.yml             # Orquestador (PostgreSQL 16, Backend, Frontend)
+├── DECISIONS.md                   # Documento de justificación técnica y arquitectura
+├── .env.example                   # Plantilla de variables de entorno
+└── README.md
 ```
 
 ---
 
-## ⚙️ Requisitos Previos
+## Requisitos Previos
 
-- **Node.js**: v20+ (o v22+)
-- **Docker** y **Docker Compose**
-- **npm**: v10+
+- **Docker** (v24+) y **Docker Compose** (v2+)
+- *Para ejecución local sin Docker*:
+  - **Node.js**: v20 LTS o superior
+  - **npm**: v10+
+  - **PostgreSQL**: v14+ (puerto 5433 o 5432)
 
 ---
 
-## 🚀 Inicio Rápido con Docker Compose
+## Inicio Rápido con Docker Compose
 
-1. **Configura el archivo de entorno**:
+El proyecto puede inicializarse por completo mediante un único comando:
+
+1. **Clonar el repositorio**:
+   ```bash
+   git clone https://github.com/alez2312p/promo-manager-kf.git
+   cd promo-manager-kf
+   ```
+
+2. **Crear archivo de variables de entorno**:
    ```bash
    cp .env.example .env
    ```
 
-2. **Inicia todos los servicios**:
+3. **Construir y levantar los contenedores**:
    ```bash
    docker compose up --build
    ```
 
-3. **Servicios disponibles**:
-   - **Frontend**: [http://localhost:3000](http://localhost:3000)
+4. **Acceso a los servicios**:
+   - **Frontend (Aplicación Web)**: [http://localhost:3000](http://localhost:3000)
    - **Backend API**: [http://localhost:4000](http://localhost:4000)
    - **Healthcheck**: [http://localhost:4000/health](http://localhost:4000/health)
-   - **PostgreSQL**: `localhost:5432`
+   - **PostgreSQL**: `localhost:5433` (usuario: `postgres`, base de datos: `promo_db`)
 
 ---
 
-## 💻 Desarrollo Local (Sin Docker)
+## Desarrollo Local (Sin Docker)
 
-### 1. Iniciar Base de Datos
-Puedes levantar únicamente la base de datos PostgreSQL con Docker:
+Para ejecutar el entorno de desarrollo localmente sin contenedores para la aplicación:
+
+### 1. Iniciar el servicio de base de datos
 ```bash
 docker compose up postgres -d
 ```
 
-### 2. Instalar Dependencias
-Desde la raíz del monorepo:
+### 2. Instalar dependencias del monorepo
 ```bash
 npm install
 ```
 
-### 3. Configurar Variables de Entorno
-Copia los archivos `.env`:
+### 3. Configurar variables de entorno
 ```bash
 cp .env.example .env
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-### 4. Generar Cliente de Prisma y Ejecutar Migraciones
+### 4. Sincronizar esquema y poblar datos iniciales
 ```bash
-npm run prisma:generate
-npm run prisma:migrate
+npm --workspace=backend run prisma:push
+npm --workspace=backend run prisma:seed
 ```
 
-### 5. Iniciar Servidores de Desarrollo
-En terminales separadas o usando workspaces:
+### 5. Iniciar servidores de desarrollo
+En dos terminales independientes:
 
 - **Backend** (puerto 4000):
   ```bash
-  npm run dev:backend
+  npm --workspace=backend run dev
   ```
 
-- **Frontend** (puerto 3000):
+- **Frontend** (puerto 3000 / 5173):
   ```bash
-  npm run dev:frontend
+  npm --workspace=frontend run dev
   ```
 
 ---
 
-## 🔍 Endpoint de Salud (`GET /health`)
+## Datos de Prueba (Seed Database)
 
-El backend incluye una verificación activa de conexión real con PostgreSQL mediante Prisma:
+Para restablecer la base de datos con categorías, productos y promociones de ejemplo:
+```bash
+npm --workspace=backend run prisma:seed
+```
 
-- **Respuesta Exitosa (HTTP 200)**:
+---
+
+## Endpoint de Salud (GET /health)
+
+El backend expone un endpoint que ejecuta una verificación activa contra PostgreSQL mediante una consulta `SELECT 1`:
+
+- **Solicitud**: `GET http://localhost:4000/health`
+- **Respuesta 200 OK (Servicio y Base de Datos Operativos)**:
   ```json
   {
     "status": "ok",
     "db": "connected"
   }
   ```
-
-- **Respuesta de Fallo (HTTP 503)** (cuando la BD no está disponible o falla `SELECT 1`):
+- **Respuesta 503 Service Unavailable (Fallo en Conexión)**:
   ```json
   {
     "status": "error",
@@ -130,6 +196,31 @@ El backend incluye una verificación activa de conexión real con PostgreSQL med
 
 ---
 
-## 🛡️ Validación de Variables de Entorno
+## Pruebas Unitarias
 
-El archivo [`backend/src/config/env.ts`](backend/src/config/env.ts) valida automáticamente las variables de entorno al iniciar la aplicación mediante **Zod**. Si falta una variable requerida (por ejemplo `DATABASE_URL`), el proceso se detendrá inmediatamente arrojando un error descriptivo con el detalle de las variables faltantes.
+Ejecuta la suite de pruebas unitarias automatizadas con Vitest:
+```bash
+npm run test
+```
+
+Valida exhaustivamente las reglas de negocio de promociones (rangos de fechas, valores de descuento porcentual y fijo, inmutabilidad y eliminación controlada).
+
+---
+
+## Pipeline de CI/CD (GitHub Actions)
+
+El archivo [`.github/workflows/ci.yml`](.github/workflows/ci.yml) define un pipeline automatizado estructurado en 3 etapas secuenciales:
+
+1. **1. Lint & Unit Tests**: Verificación de tipos con `tsc --noEmit` y ejecución de pruebas unitarias con Vitest.
+2. **2. Build Docker Images**: Construcción de las imágenes Docker multietapa de Backend y Frontend.
+3. **3. Integration Smoke Test**:
+   - Validación estricta de variables de entorno y secretos requeridos.
+   - Despliegue de los servicios con `docker compose up -d`.
+   - Sondeo al endpoint `GET /health` con validación de código HTTP 200 y conectividad a base de datos.
+   - En caso de anomalía, extracción automática de logs de contenedores y terminación con código de error.
+
+---
+
+## Justificación de Decisiones Técnicas
+
+Para consultar el análisis detallado sobre la selección de arquitectura, tecnologías y patrones de diseño utilizados en este proyecto, revise el documento **[`DECISIONS.md`](DECISIONS.md)**.
