@@ -1,4 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  Prisma,
+  Promotion as PrismaPromotion,
+} from '@prisma/client';
 import {
   IPromotionRepository,
   PromotionFilters,
@@ -11,13 +15,13 @@ import {
 export class PrismaPromotionRepository implements IPromotionRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  private toDomain(raw: any): Promotion {
+  private toDomain(raw: PrismaPromotion): Promotion {
     return new Promotion({
       id: raw.id,
       code: raw.code,
       name: raw.name,
       description: raw.description,
-      type: raw.type,
+      type: raw.type as 'PERCENTAGE' | 'FIXED_AMOUNT',
       value: raw.value,
       minSpend: raw.minSpend,
       maxDiscount: raw.maxDiscount,
@@ -90,7 +94,7 @@ export class PrismaPromotionRepository implements IPromotionRepository {
   }
 
   async findAll(filters?: PromotionFilters): Promise<Promotion[]> {
-    const where: any = {};
+    const where: Prisma.PromotionWhereInput = {};
 
     if (filters?.status) {
       where.status = filters.status;

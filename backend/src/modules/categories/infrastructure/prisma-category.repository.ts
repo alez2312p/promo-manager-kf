@@ -1,11 +1,19 @@
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  Prisma,
+  Category as PrismaCategory,
+} from '@prisma/client';
 import { ICategoryRepository } from '../domain/category.repository.interface';
 import { Category } from '../domain/category.entity';
+
+type CategoryWithCount = PrismaCategory & {
+  _count?: { products: number };
+};
 
 export class PrismaCategoryRepository implements ICategoryRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  private toDomain(raw: any): Category {
+  private toDomain(raw: CategoryWithCount): Category {
     return new Category({
       id: raw.id,
       name: raw.name,
@@ -92,7 +100,7 @@ export class PrismaCategoryRepository implements ICategoryRepository {
   }
 
   async delete(id: string, reassignToCategoryId?: string | null): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Reassign or unassign all products belonging to this category
       await tx.product.updateMany({
         where: { categoryId: id },

@@ -15,7 +15,7 @@
     "prisma:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "tsc --noEmit"
+    "lint": "prisma generate && tsc --noEmit"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

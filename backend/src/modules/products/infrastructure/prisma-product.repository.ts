@@ -1,11 +1,19 @@
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  Product as PrismaProduct,
+  Category as PrismaCategory,
+} from '@prisma/client';
 import { IProductRepository } from '../domain/product.repository.interface';
 import { Product } from '../domain/product.entity';
+
+type ProductWithCategory = PrismaProduct & {
+  category?: PrismaCategory | null;
+};
 
 export class PrismaProductRepository implements IProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  private toDomain(raw: any): Product {
+  private toDomain(raw: ProductWithCategory): Product {
     return new Product({
       id: raw.id,
       name: raw.name,
