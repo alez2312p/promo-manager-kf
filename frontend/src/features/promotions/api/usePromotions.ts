@@ -39,12 +39,40 @@ export function useCreatePromotion() {
       toast.success('¡Promoción creada!', {
         description: `La promoción '${response.data.name}' (${response.data.code}) ha sido creada en estado Programada.`,
       });
-      // Invalidate queries to refresh lists and counters
       queryClient.invalidateQueries({ queryKey: PROMOTIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: PROMOTION_METRICS_QUERY_KEY });
     },
     onError: (error: Error) => {
       toast.error('Error al crear promoción', {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
+ * Hook to update a promotion details
+ */
+export function useUpdatePromotion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Partial<CreatePromotionInput>;
+    }) => promotionApi.update(id, payload),
+    onSuccess: (response) => {
+      toast.success('¡Promoción actualizada!', {
+        description: `La promoción '${response.data.name}' (${response.data.code}) ha sido actualizada.`,
+      });
+      queryClient.invalidateQueries({ queryKey: PROMOTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: PROMOTION_METRICS_QUERY_KEY });
+    },
+    onError: (error: Error) => {
+      toast.error('Error al actualizar promoción', {
         description: error.message,
       });
     },

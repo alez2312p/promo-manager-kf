@@ -13,9 +13,19 @@ export const createProductSchema = z.object({
   price: z
     .number({ required_error: 'Price is required' })
     .positive('Price must be greater than 0'),
-  categoryId: z
-    .string({ required_error: 'Category ID is required' })
-    .uuid('Category ID must be a valid UUID'),
+  categoryId: z.string().uuid('Category ID must be a valid UUID').nullable().optional(),
+});
+
+export const updateProductSchema = z.object({
+  name: z.string().min(2).max(150).optional(),
+  sku: z
+    .string()
+    .min(3)
+    .max(50)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .optional(),
+  price: z.number().positive().optional(),
+  categoryId: z.string().uuid('Category ID must be a valid UUID').nullable().optional(),
 });
 
 export const productIdParamSchema = z.object({

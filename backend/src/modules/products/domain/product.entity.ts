@@ -5,7 +5,7 @@ export interface ProductProps {
   name: string;
   sku: string;
   price: number;
-  categoryId: string;
+  categoryId: string | null;
   category?: CategoryProps | null;
   createdAt: Date;
   updatedAt: Date;
@@ -30,7 +30,7 @@ export class Product {
     return this.props.price;
   }
 
-  get categoryId(): string {
+  get categoryId(): string | null {
     return this.props.categoryId;
   }
 

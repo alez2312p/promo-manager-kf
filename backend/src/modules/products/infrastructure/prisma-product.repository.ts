@@ -79,6 +79,24 @@ export class PrismaProductRepository implements IProductRepository {
     return list.map((item) => this.toDomain(item));
   }
 
+  async update(product: Product): Promise<Product> {
+    const raw = await this.prisma.product.update({
+      where: { id: product.id },
+      data: {
+        name: product.name,
+        sku: product.sku,
+        price: product.price,
+        categoryId: product.categoryId,
+        updatedAt: product.updatedAt,
+      },
+      include: {
+        category: true,
+      },
+    });
+
+    return this.toDomain(raw);
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.product.delete({
       where: { id },

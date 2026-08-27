@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Percent, DollarSign } from 'lucide-react';
+import { Loader2, Plus, Percent, Target } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreatePromotion } from '../api/usePromotions';
+import { useCategories } from '../../categories/api/useCategories';
+import { useProducts } from '../../products/api/useProducts';
+import { formatCOP } from '@/lib/utils';
 
-/**
- * Zod validation schema matching strict Domain Rules from Backend
- */
+type ScopeType = 'GLOBAL' | 'CATEGORY' | 'PRODUCT';
+
 const promotionFormSchema = z
   .object({
     code: z
@@ -56,6 +58,8 @@ const promotionFormSchema = z
       .string({ required_error: 'La fecha de finalización es requerida' })
       .min(1, 'Selecciona la fecha de fin'),
     usageLimit: z.coerce.number().optional(),
+    categoryId: z.string().optional().nullable(),
+    productId: z.string().optional().nullable(),
   })
   .superRefine((data, ctx) => {
     // 1. Business Rule: End date must be strictly after start date
@@ -106,8 +110,14 @@ export const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
   onOpenChange,
 }) => {
   const createMutation = useCreatePromotion();
+  const { data: categoriesData } = useCategories();
+  const { data: productsData } = useProducts();
 
-  // Helper default dates (start now, end in 7 days)
+  const categories = categoriesData?.data || [];
+  const products = productsData?.data || [];
+
+  const [scope, setScope] = useState<ScopeType>('GLOBAL');
+
   const defaultStartDate = new Date().toISOString().slice(0, 16);
   const defaultEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     .toISOString()
@@ -132,6 +142,18 @@ export const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
 
   const selectedType = watch('type');
 
+  const handleScopeChange = (newScope: ScopeType) => {
+    setScope(newScope);
+    if (newScope === 'GLOBAL') {
+      setValue('categoryId', null);
+      setValue('productId', null);
+    } else if (newScope === 'CATEGORY') {
+      setValue('productId', null);
+    } else if (newScope === 'PRODUCT') {
+      setValue('categoryId', null);
+    }
+  };
+
   const onSubmit = (values: PromotionFormValues) => {
     createMutation.mutate(
       {
@@ -145,10 +167,13 @@ export const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
         startDate: new Date(values.startDate).toISOString(),
         endDate: new Date(values.endDate).toISOString(),
         usageLimit: values.usageLimit ? Number(values.usageLimit) : null,
+        categoryId: scope === 'CATEGORY' ? values.categoryId || null : null,
+        productId: scope === 'PRODUCT' ? values.productId || null : null,
       },
       {
         onSuccess: () => {
           reset();
+          setScope('GLOBAL');
           onOpenChange(false);
         },
       }
@@ -157,15 +182,14 @@ export const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Plus className="w-5 h-5 text-primary" />
             Nueva Promoción
           </DialogTitle>
           <DialogDescription>
-            Crea una campaña o código de descuento. Las reglas de dominio se
-            validarán automáticamente.
+            Crea una campaña de descuento para toda la tienda, una categoría o un producto específico.
           </DialogDescription>
         </DialogHeader>
 
@@ -226,26 +250,100 @@ export const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
             )}
           </div>
 
-          {/* Value & Max Discount */}
+          {/* Scope Selector: Global vs Category vs Product */}
+          <div className="space-y-3 p-3.5 rounded-xl border bg-muted/20">
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4 text-primary" />
+              <Label className="text-sm font-semibold">
+                Alcance del Descuento
+              </Label>
+            </div>
+
+            <Select
+              value={scope}
+              onValueChange={(val: ScopeType) => handleScopeChange(val)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona el alcance" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="GLOBAL">🌐 Toda la Tienda (Global)</SelectItem>
+                <SelectItem value="CATEGORY">📂 Toda una Categoría</SelectItem>
+                <SelectItem value="PRODUCT">📦 Un Producto Específico</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Dynamic Category Selector */}
+            {scope === 'CATEGORY' && (
+              <div className="space-y-1.5 pt-1 animate-in fade-in-50">
+                <Label htmlFor="promo-cat" className="text-xs">
+                  Seleccionar Categoría Beneficiada <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  onValueChange={(val) =>
+                    setValue('categoryId', val, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger id="promo-cat">
+                    <SelectValue placeholder="Elige una categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Dynamic Product Selector */}
+            {scope === 'PRODUCT' && (
+              <div className="space-y-1.5 pt-1 animate-in fade-in-50">
+                <Label htmlFor="promo-prod" className="text-xs">
+                  Seleccionar Producto Beneficiado <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  onValueChange={(val) =>
+                    setValue('productId', val, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger id="promo-prod">
+                    <SelectValue placeholder="Elige un producto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} ({p.sku}) - {formatCOP(p.price)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Value & Usage Limit */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="value">
-                Valor del Descuento {selectedType === 'PERCENTAGE' ? '(%)' : '($)'}{' '}
+                Valor {selectedType === 'PERCENTAGE' ? '(%)' : '($ COP)'}{' '}
                 <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <Input
                   id="value"
                   type="number"
-                  step="0.01"
-                  placeholder={selectedType === 'PERCENTAGE' ? '20' : '50.00'}
+                  step={selectedType === 'PERCENTAGE' ? '1' : '500'}
+                  placeholder={selectedType === 'PERCENTAGE' ? '20' : '10000'}
                   {...register('value')}
                 />
-                <span className="absolute right-3 top-2.5 text-xs text-muted-foreground">
+                <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-mono">
                   {selectedType === 'PERCENTAGE' ? (
                     <Percent className="w-3.5 h-3.5" />
                   ) : (
-                    <DollarSign className="w-3.5 h-3.5" />
+                    'COP'
                   )}
                 </span>
               </div>
@@ -262,11 +360,6 @@ export const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                 placeholder="Ilimitado si es vacío"
                 {...register('usageLimit')}
               />
-              {errors.usageLimit && (
-                <p className="text-xs text-destructive">
-                  {errors.usageLimit.message}
-                </p>
-              )}
             </div>
           </div>
 
@@ -313,25 +406,21 @@ export const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
               placeholder="Detalles sobre las condiciones de la promoción..."
               {...register('description')}
             />
-            {errors.description && (
-              <p className="text-xs text-destructive">
-                {errors.description.message}
-              </p>
-            )}
           </div>
 
-          <DialogFooter className="pt-3">
+          <DialogFooter className="pt-4 grid grid-cols-2 gap-3 w-full sm:space-x-0">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="w-full"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={createMutation.isPending}
-              className="gap-2"
+              className="w-full gap-2"
             >
               {createMutation.isPending && (
                 <Loader2 className="w-4 h-4 animate-spin" />
