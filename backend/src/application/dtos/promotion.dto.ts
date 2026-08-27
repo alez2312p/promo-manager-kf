@@ -1,0 +1,34 @@
+import { DiscountType, PromotionStatus } from '../../domain/entities/promotion.entity';
+
+export interface CreatePromotionDTO {
+  code: string;
+  name: string;
+  description?: string | null;
+  type: DiscountType;
+  value: number;
+  minSpend?: number | null;
+  maxDiscount?: number | null;
+  startDate: Date;
+  endDate: Date;
+  usageLimit?: number | null;
+  categoryIds?: string[];
+  productIds?: string[];
+}
+
+export interface UpdatePromotionDTO {
+  name?: string;
+  description?: string | null;
+  type?: DiscountType;
+  value?: number;
+  minSpend?: number | null;
+  maxDiscount?: number | null;
+  startDate?: Date;
+  endDate?: Date;
+  usageLimit?: number | null;
+  categoryIds?: string[];
+  productIds?: string[];
+}
+
+export interface UpdatePromotionStatusDTO {
+  status: PromotionStatus;
+}

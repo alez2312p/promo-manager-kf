@@ -1,0 +1,37 @@
+{
+  "name": "promo-manager-kf",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Technical test for Promotions Manager",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm --workspace=backend run dev",
+    "dev:frontend": "npm --workspace=frontend run dev",
+    "build:backend": "npm --workspace=backend run build",
+    "build:frontend": "npm --workspace=frontend run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:down:v": "docker compose down -v",
+    "prisma:generate": "npm --workspace=backend run prisma:generate",
+    "prisma:migrate": "npm --workspace=backend run prisma:migrate",
+    "prisma:push": "npm --workspace=backend run prisma:push",
+    "prisma:studio": "npm --workspace=backend run prisma:studio",
+    "test": "npm --workspace=backend run test"
+  },
+  "keywords": [
+    "promotions",
+    "express",
+    "react",
+    "vite",
+    "prisma",
+    "postgresql",
+    "typescript",
+    "docker"
+  ],
+  "author": "",
+  "license": "ISC"
+}
