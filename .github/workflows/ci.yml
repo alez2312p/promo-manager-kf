@@ -16,49 +16,49 @@ jobs:
   # Stage 1: Lint & Unit Tests
   # ============================================================================
   lint-and-test:
-    name: 1. Lint & Unit Tests
+    name: "1. Lint & Unit Tests"
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js 20
+      - name: "Setup Node.js 20"
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: 📦 Install Monorepo Dependencies
+      - name: "Install Monorepo Dependencies"
         run: npm ci
 
-      - name: 🔍 Type Check & Linting
+      - name: "Type Check & Linting"
         run: |
           echo "Verifying TypeScript types across backend and frontend..."
           npm --workspace=backend run lint
           npm --workspace=frontend exec -- tsc --noEmit
 
-      - name: 🧪 Run Unit Tests (Vitest)
+      - name: "Run Unit Tests (Vitest)"
         run: |
-          echo "Executing domain & service unit tests..."
+          echo "Executing domain and service unit tests..."
           npm run test
 
   # ============================================================================
   # Stage 2: Docker Images Build
   # ============================================================================
   build-docker:
-    name: 2. Build Docker Images
+    name: "2. Build Docker Images"
     needs: [lint-and-test]
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 🐳 Set up Docker Buildx
+      - name: "Set up Docker Buildx"
         uses: actions/setup-buildx-action@v3
 
-      - name: 🏗️ Build Backend Docker Image
+      - name: "Build Backend Docker Image"
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -66,7 +66,7 @@ jobs:
           push: false
           tags: promo-backend:ci
 
-      - name: 🏗️ Build Frontend Docker Image
+      - name: "Build Frontend Docker Image"
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -80,7 +80,7 @@ jobs:
   # Stage 3: Integration Smoke Test (Docker Compose + GET /health)
   # ============================================================================
   smoke-test:
-    name: 3. Integration Smoke Test
+    name: "3. Integration Smoke Test"
     needs: [build-docker]
     runs-on: ubuntu-latest
 
@@ -94,19 +94,19 @@ jobs:
       CORS_ORIGIN: http://localhost:3000
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 🔒 Validate Environment Variables
+      - name: "Validate Environment Variables"
         run: |
           echo "Verifying required environment variables are set..."
           if [ -z "$POSTGRES_USER" ] || [ -z "$POSTGRES_PASSWORD" ] || [ -z "$POSTGRES_DB" ]; then
-            echo "❌ Error: Required database secrets/environment variables are missing!"
+            echo "Error: Required database secrets or environment variables are missing!"
             exit 1
           fi
-          echo "✅ All required environment variables verified."
+          echo "All required environment variables verified."
 
-      - name: 📝 Generate Temporary .env File
+      - name: "Generate Temporary .env File"
         run: |
           cat <<EOF > .env
           POSTGRES_USER=${POSTGRES_USER}
@@ -120,12 +120,12 @@ jobs:
           VITE_API_URL=http://localhost:4000
           EOF
 
-      - name: 🚀 Start Services with Docker Compose
+      - name: "Start Services with Docker Compose"
         run: |
           echo "Starting containers in detached mode..."
           docker compose up -d --build
 
-      - name: ⏳ Wait for Containers to be Ready (Healthcheck polling)
+      - name: "Wait for Containers to be Ready"
         run: |
           echo "Waiting for services and PostgreSQL database to initialize..."
           MAX_RETRIES=30
@@ -136,7 +136,7 @@ jobs:
             echo "Attempt $((COUNT+1))/$MAX_RETRIES - Healthcheck response: $HTTP_STATUS"
             
             if [ "$HTTP_STATUS" -eq 200 ]; then
-              echo "✅ Backend and Database are healthy and responding 200 OK!"
+              echo "Backend and Database are healthy and responding 200 OK!"
               break
             fi
             
@@ -145,12 +145,12 @@ jobs:
           done
           
           if [ $COUNT -ge $MAX_RETRIES ]; then
-            echo "❌ Timeout waiting for /health endpoint."
+            echo "Timeout waiting for /health endpoint."
             docker compose logs
             exit 1
           fi
 
-      - name: 🩺 Smoke Test: Assert /health Status & Database Connectivity
+      - name: "Smoke Test - Assert Health Status and DB Connectivity"
         run: |
           echo "Performing detailed assertion against GET /health..."
           RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" http://localhost:4000/health)
@@ -162,21 +162,21 @@ jobs:
           echo "Response Body: $BODY"
           
           if [ "$STATUS_CODE" -ne 200 ]; then
-            echo "❌ Smoke test failed! Expected status 200, got $STATUS_CODE"
+            echo "Smoke test failed! Expected status 200, got $STATUS_CODE"
             docker compose logs
             exit 1
           fi
           
           # Check JSON body content
           if [[ "$BODY" != *"\"status\":\"ok\""* ]] || [[ "$BODY" != *"\"db\":\"connected\""* ]]; then
-            echo "❌ Smoke test failed! Body does not indicate healthy database connection."
+            echo "Smoke test failed! Body does not indicate healthy database connection."
             docker compose logs
             exit 1
           fi
           
-          echo "🎉 Smoke test passed successfully! Application and DB are 100% operational."
+          echo "Smoke test passed successfully! Application and DB are 100% operational."
 
-      - name: 🧹 Teardown Docker Compose
+      - name: "Teardown Docker Compose"
         if: always()
         run: |
           echo "Cleaning up containers and volumes..."
